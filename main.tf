@@ -14,7 +14,7 @@ locals {
 }
 
 module "res-id" {
-  source = "../utility/random-identifier"
+  source = "./utility/random-identifier"
 }
 
 resource "azurerm_storage_account" "storeacc" {

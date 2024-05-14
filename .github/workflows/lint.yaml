@@ -1,0 +1,26 @@
+name: TF Lint
+on:
+  workflow_call:
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    container:
+      image: hashicorp/terraform:1.5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+
+      - name: Show version
+        run: tflint --version
+
+      - name: Init TFLint
+        run: tflint --init --config $GITHUB_WORKSPACE/.config/tflint.hcl
+
+      - name: TFLint
+        run: |
+          for d in . $(find . -maxdepth 2 -path './modules/*' -type d -print); do cd $d && echo "current dir $PWD" && terraform init && TFLINT_LOG=debug tflint --config $GITHUB_WORKSPACE/.config/tflint.hcl || exit $?; cd -; done

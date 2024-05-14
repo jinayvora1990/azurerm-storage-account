@@ -7,8 +7,8 @@ jobs:
   validate:
     uses: ./.github/workflows/validate.yaml
 
-#   lint:
-#     uses: ./.github/workflows/lint.yaml
+  lint:
+    uses: ./.github/workflows/lint.yaml
 
 #   documentation:
 #     needs: [lint, validate]

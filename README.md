@@ -9,13 +9,13 @@
 
 | Name | Version |
 |------|---------|
-| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | 3.97.1 |
+| <a name="provider_azurerm"></a> [azurerm](#provider\_azurerm) | >= 3.71.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_res-id"></a> [res-id](#module\_res-id) | ../utility/random-identifier | n/a |
+| <a name="module_res-id"></a> [res-id](#module\_res-id) | ./utility/random-identifier | n/a |
 
 ## Resources
 

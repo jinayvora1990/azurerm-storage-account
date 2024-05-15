@@ -1,5 +1,31 @@
 name: CI
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 jobs:
-  ci:
-    uses: ./.github/workflows/ci-modules.yaml
+  validate:
+    uses: ./.github/workflows/validate.yaml
+
+  lint:
+    uses: ./.github/workflows/lint.yaml
+
+  documentation:
+    needs: [lint, validate]
+    uses: ./.github/workflows/documentation.yaml
+
+  # code-analysis:
+  #   needs: [documentation]
+  #   uses: ./.github/workflows/code-analysis.yaml
+
+  # examples:
+  #   needs: [code-analysis]
+  #   uses: ./.github/workflows/examples.yaml
+
+  # generator:
+  #   needs: [examples]
+  #   uses: ./.github/workflows/generate.yaml
+

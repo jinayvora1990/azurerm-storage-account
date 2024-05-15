@@ -14,9 +14,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          set-safe-directory: true
 
       - name: TFDocs
         run: |
           terraform-docs markdown . > README.md || exit $?
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git diff --exit-code

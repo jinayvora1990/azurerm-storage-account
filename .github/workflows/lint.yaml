@@ -1,8 +1,6 @@
 name: TF Lint
 on:
   workflow_call:
-env:
-  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 jobs:
   lint:
     runs-on: ubuntu-latest

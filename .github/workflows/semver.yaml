@@ -1,0 +1,73 @@
+name: semver workflow
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release'
+        required: true
+        default: 'PATCH'
+        type: choice
+        options:
+          - "PATCH"
+          - "MINOR"
+          - "MAJOR"
+jobs:
+  VersionImage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check Path
+        run: pwd
+      - name: Get Last Commit Tag
+        id: last_commit_tag
+        run: |
+          LAST_TAG=$(git tag --points-at HEAD)
+          echo "Last Tag - $LAST_TAG"
+          echo "::set-output name=last_tag::$LAST_TAG"
+      - name: Get Latest Tag
+        id: latest_tag
+        if: ${{ steps.last_commit_tag.outputs.last_tag == '' }}
+        uses: ./.github/actions/semver
+        with:
+          release: ${{ github.event.inputs.release }}
+      - name: Set Version Tag
+        id: next_tag
+        run: |
+          LAST_TAG=${{ steps.last_commit_tag.outputs.last_tag }}
+          echo "Last Tag - $LAST_TAG"
+          if [[ -n "$LAST_TAG" ]]; then
+            LATEST_TAG=''
+          else
+            LATEST_TAG=${{ steps.latest_tag.outputs.version_tag }}
+          fi
+          echo "Latest Tag - $LATEST_TAG"
+          echo "::set-output name=next_tag::$LATEST_TAG"
+    outputs:
+      version_tag: ${{ steps.next_tag.outputs.next_tag }}
+
+  PushTag:
+    permissions:
+      contents: write
+    needs:
+      - VersionImage
+    runs-on: ubuntu-latest
+    env:
+      SEMANTIC_VERSION_TAG: "${{needs.VersionImage.outputs.version_tag}}"
+    if: ${{needs.VersionImage.outputs.version_tag != ''}}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check Path
+        run: pwd
+      - name: Push Latest Tag
+        id: create_tag
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{needs.VersionImage.outputs.version_tag}}',
+              sha: context.sha
+            })

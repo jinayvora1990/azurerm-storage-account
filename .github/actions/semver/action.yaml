@@ -1,0 +1,50 @@
+name: 'semantic-versioning'
+description: 'Generate a version depending on the commit'
+inputs:
+  release:
+    description: "Major/Minor/Patch Release"
+    default: "PATCH"
+    required: true
+outputs:
+  version_tag:
+    description: "New Tag Generated"
+    value: ${{ steps.generate_new_tag.outputs.NEW_TAG }}
+runs:
+  using: "composite"
+  steps:
+    - name: Code Checkout
+      id: code_checkout
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+    - name: Get Current Tag
+      id: current_tag
+      run: |
+        CURRENT_TAG="$(git describe --abbrev=0 --tags --always || true)"
+        echo "Current tag is - $CURRENT_TAG"
+        echo "::set-output name=CURRENT_TAG::$CURRENT_TAG"
+      shell: bash
+    - name: Generate New Tag
+      id: generate_new_tag
+      run: |
+        TAG="${{ steps.current_tag.outputs.CURRENT_TAG }}"
+        RELEASE="${{ inputs.release }}"
+        echo $RELEASE
+        VERSIONS=($(echo $TAG | tr "." "\n"))
+        if [[ $RELEASE == "MAJOR" ]]; then
+            VERSIONS[0]=$((VERSIONS[0]+1))
+            VERSIONS[1]=0
+            VERSIONS[2]=0
+            echo Update Major Version to ${VERSIONS[0]}
+        elif [[ $RELEASE == "PATCH" ]]; then
+            VERSIONS[2]=$((VERSIONS[2]+1))
+            echo Update patch to ${VERSIONS[2]}
+        else
+            VERSIONS[1]=$((VERSIONS[1]+1))
+            VERSIONS[2]=0
+            echo Update minor version to ${VERSIONS[1]}
+        fi
+        NEW_TAG=$( IFS=$'.'; echo "${VERSIONS[*]}" )
+        echo "Latest tag - $NEW_TAG"
+        echo "::set-output name=NEW_TAG::$NEW_TAG"
+      shell: bash

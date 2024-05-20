@@ -1,0 +1,97 @@
+name: Subscription Vending Pipeline
+on:
+  workflow_dispatch:
+    inputs:
+      subscription_name:
+        description: Subscription Name to be created
+        type: string
+        required: true
+      team_name:
+        description: The name of the team used to name other resources
+        type: string
+        required: true
+      management_group_name:
+        description: The name of the existing management group associated with the new subscription
+        type: string
+        required: true
+
+jobs:
+  CreateSubscription:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          working-directory: ./sub-vending/subscription
+      - name: login
+        uses: Azure/login@v2.1.0
+        with:
+          client-id: ${{ secrets.CLIENT_ID }}
+          tenant-id: ${{ secrets.TENANT_ID }}
+          subscription-id: ${{ secrets.ENGG_SUBSCRIPTION_ID }}
+      - name: Azure CLI script
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az account show
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.5
+      - name: Terraform Init
+        env:
+          ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ENGG_SUBSCRIPTION_ID }}
+        run: terraform init
+      - name: Terraform plan
+        run: terraform plan \
+                -var="subscription_name=${{github.event.inputs.subscription_name}}"
+                -var="management_group_name=${{github.event.inputs.management_group_name}}"
+                -out plan.out
+      - name: Terraform apply
+        id: apply
+        run: |
+          terraform apply plan.out
+          echo "sub_id=$(terraform output subscription-id)" >> $GITHUB_OUTPUT
+    outputs:
+      subscription_id: ${{ steps.apply.outputs.sub_id }}'
+
+  CreateStorageAccount:
+    runs-on: ubuntu-latest
+    env:
+      SUBSCRIPTION_ID: "${{ needs.CreateSubscription.outputs.sub_name }}"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          working-directory: ./sub-vending/storage-account
+      - name: login
+        uses: Azure/login@v2.1.0
+        with:
+          client-id: ${{ secrets.CLIENT_ID }}
+          tenant-id: ${{ secrets.TENANT_ID }}
+          subscription-id: $SUBSCRIPTION_ID
+      - name: Terraform Setup
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.5
+      - name: Terraform Init
+        env:
+          ARM_CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.ENGG_SUBSCRIPTION_ID }}
+        run: terraform init
+      - name: Terraform plan
+        run: terraform plan \
+                  -var="team_name=${{github.event.inputs.team_name}}"
+                  -out plan.out
+      - name: Terraform apply
+        id: apply
+        run: |
+          terraform apply plan.out
+          echo "subscription id=$SUBSCRIPTION_ID"
+          echo "Storage account name=$(terraform output storage_account_name)"
+          echo "Resource Group name=$(terraform output resource_group_name)"
+          echo "Container name=$(terraform output container_name)"

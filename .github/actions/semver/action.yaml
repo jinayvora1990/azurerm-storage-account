@@ -24,7 +24,7 @@ runs:
       run: |
         CURRENT_TAG="$(git describe --abbrev=0 --tags --always || true)"
         echo "Current tag is - $CURRENT_TAG"
-        echo "::set-output name=CURRENT_TAG::$CURRENT_TAG"
+        echo "CURRENT_TAG=$CURRENT_TAG" >> $GITHUB_OUTPUT
 
     - name: Generate New Tag
       id: generate_new_tag
@@ -49,4 +49,4 @@ runs:
         fi
         NEW_TAG=$( IFS=$'.'; echo "${VERSIONS[*]}" )
         echo "Latest tag - $NEW_TAG"
-        echo "::set-output name=NEW_TAG::$NEW_TAG"
+        echo "NEW_TAG=$NEW_TAG" >> $GITHUB_OUTPUT

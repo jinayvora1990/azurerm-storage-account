@@ -11,6 +11,7 @@ on:
           - "PATCH"
           - "MINOR"
           - "MAJOR"
+
 jobs:
   VersionImage:
     runs-on: ubuntu-latest
@@ -24,35 +25,35 @@ jobs:
       - name: Check Path
         run: pwd
 
-      - name: Get Last Commit Tag
-        id: last_commit_tag
+      - name: Check latest Commit Tag
+        id: latest_tag
         run: |
-          LAST_TAG=$(git tag --points-at HEAD)
-          if [[ -n "$LAST_TAG" ]]; then
+          LATEST_TAG=$(git tag --points-at HEAD)
+          if [[ -n "$LATEST_TAG" ]]; then
             echo "The tag already exists"
             exit 1
           else
-            echo "Last Tag - $LAST_TAG"
-            echo "::set-output name=last_tag::$LAST_TAG"
+            echo "Latest Tag - $LATEST_TAG"
+            echo "latest_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
           fi
 
+  NewVersionTag:
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    steps:
       - name: Get Latest Tag
-        id: latest_tag
-        if: ${{ steps.last_commit_tag.outputs.last_tag == '' }}
+        id: version_tag
         uses: ./.github/actions/semver
         with:
           release: ${{ github.event.inputs.release }}
-
       - name: Set Version Tag
-        id: next_tag
+        id: new_tag
         run: |
-          LAST_TAG=${{ steps.last_commit_tag.outputs.last_tag }}
-          echo "Last Tag - $LAST_TAG"
-          LATEST_TAG=${{ steps.latest_tag.outputs.version_tag }}
-          echo "Latest Tag - $LATEST_TAG"
-          echo "::set-output name=next_tag::$LATEST_TAG"
+          NEW_TAG=${{ steps.version_tag.outputs.version_tag }}
+          echo "Latest Tag - $NEW_TAG"
+          echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
     outputs:
-      version_tag: ${{ steps.next_tag.outputs.next_tag }}
+      version_tag: ${{ steps.new_tag.outputs.new_tag }}
 
   PushTag:
     permissions:
@@ -60,18 +61,7 @@ jobs:
     needs:
       - VersionImage
     runs-on: ubuntu-latest
-    env:
-      SEMANTIC_VERSION_TAG: "${{needs.VersionImage.outputs.version_tag}}"
-    if: ${{needs.VersionImage.outputs.version_tag != ''}}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check Path
-        run: pwd
-
       - name: Push Latest Tag
         id: create_tag
         uses: actions/github-script@v7

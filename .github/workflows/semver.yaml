@@ -1,4 +1,4 @@
-name: Semver workflow
+name: semver workflow
 on:
   workflow_dispatch:
     inputs:
@@ -14,6 +14,7 @@ on:
 jobs:
   VersionImage:
     runs-on: ubuntu-latest
+    continue-on-error: false
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,6 +30,8 @@ jobs:
           LAST_TAG=$(git tag --points-at HEAD)
           echo "Last Tag - $LAST_TAG"
           echo "::set-output name=last_tag::$LAST_TAG"
+          if [[ -n "$LAST_TAG" ]]; then
+            exit 1
 
       - name: Get Latest Tag
         id: latest_tag
@@ -42,11 +45,7 @@ jobs:
         run: |
           LAST_TAG=${{ steps.last_commit_tag.outputs.last_tag }}
           echo "Last Tag - $LAST_TAG"
-          if [[ -n "$LAST_TAG" ]]; then
-            LATEST_TAG=''
-          else
-            LATEST_TAG=${{ steps.latest_tag.outputs.version_tag }}
-          fi
+          LATEST_TAG=${{ steps.latest_tag.outputs.version_tag }}
           echo "Latest Tag - $LATEST_TAG"
           echo "::set-output name=next_tag::$LATEST_TAG"
     outputs:
@@ -62,7 +61,7 @@ jobs:
       SEMANTIC_VERSION_TAG: "${{needs.VersionImage.outputs.version_tag}}"
     if: ${{needs.VersionImage.outputs.version_tag != ''}}
     steps:
-      - name: 
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0

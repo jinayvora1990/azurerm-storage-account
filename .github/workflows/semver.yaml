@@ -21,10 +21,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Check Path
-        run: pwd
-
       - name: Check latest Commit Tag
         id: latest_tag
         run: |
@@ -43,6 +39,10 @@ jobs:
     needs:
       - VersionImage
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Get Latest Tag
         id: version_tag
         uses: ./.github/actions/semver

@@ -28,10 +28,13 @@ jobs:
         id: last_commit_tag
         run: |
           LAST_TAG=$(git tag --points-at HEAD)
-          echo "Last Tag - $LAST_TAG"
-          echo "::set-output name=last_tag::$LAST_TAG"
           if [[ -n "$LAST_TAG" ]]; then
+            echo "The tag already exists"
             exit 1
+          else
+            echo "Last Tag - $LAST_TAG"
+            echo "::set-output name=last_tag::$LAST_TAG"
+          fi
 
       - name: Get Latest Tag
         id: latest_tag

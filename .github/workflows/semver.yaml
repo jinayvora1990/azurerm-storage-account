@@ -40,6 +40,8 @@ jobs:
   NewVersionTag:
     runs-on: ubuntu-latest
     continue-on-error: false
+    needs:
+      - VersionImage
     steps:
       - name: Get Latest Tag
         id: version_tag
@@ -58,8 +60,9 @@ jobs:
   PushTag:
     permissions:
       contents: write
+    continue-on-error: false
     needs:
-      - VersionImage
+      - NewVersionTag
     runs-on: ubuntu-latest
     steps:
       - name: Push Latest Tag

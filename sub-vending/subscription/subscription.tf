@@ -1,5 +1,5 @@
 resource "azurerm_subscription" "sub" {
-  subscription_name = var.subscription_name
+  subscription_name = "${var.team_name}-${var.env}"
 }
 
 data "azurerm_management_group" "mgmt_group" {

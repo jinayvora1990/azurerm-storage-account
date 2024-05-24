@@ -1,7 +1,7 @@
-output "subscription-name" {
+output "subscription_name" {
   value = azurerm_subscription.sub.subscription_name
 }
 
-output "subscription-id" {
+output "subscription_id" {
   value = azurerm_subscription.sub.id
 }
